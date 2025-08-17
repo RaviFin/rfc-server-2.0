@@ -28,24 +28,79 @@ export const listCustomers = asyncHandler(async (req, res) => {
 });
 
 // Get Customer Rich View
+
 export const getCustomer = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id))
-    throw new ApiError(400, "Invalid ID");
 
-  const customer = await Customer.findById(id);
-  if (!customer) throw new ApiError(404, "Customer not found");
+  // Use aggregation for better performance
+  const result = await Customer.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(id) } },
+    {
+      $lookup: {
+        from: "loans",
+        localField: "_id",
+        foreignField: "loanTaker",
+        as: "loans",
+      },
+    },
+    {
+      $lookup: {
+        from: "transactions",
+        localField: "_id",
+        foreignField: "relatedCustomer",
+        as: "transactions",
+      },
+    },
+    {
+      $addFields: {
+        totalPrincipalOutstanding: { $sum: "$loans.principalOutstanding" },
+        totalInterestDue: { $sum: "$loans.interestAccruedUnpaid" },
+        totalOverdue: { $sum: "$loans.lateFeesAccrued" },
+        totalAmountDisbursed: { $sum: "$loans.amountDisbursed" },
+        totalReceivedInterest: { $sum: "$loans.totalReceivedInterest" },
+      },
+    },
+    {
+      $addFields: {
+        roi: {
+          $cond: {
+            if: { $gt: ["$totalAmountDisbursed", 0] },
+            then: {
+              $divide: ["$totalReceivedInterest", "$totalAmountDisbursed"],
+            },
+            else: 0,
+          },
+        },
+      },
+    },
+  ]);
 
-  // TODO: Fetch loans and transactions for this customer
-  // const loans = await Loan.find({ customer: id });
-  // const transactions = await Transaction.find({ customer: id });
+  if (!result.length) throw new ApiError(404, "Customer not found");
 
-  // TODO: Compute totals and ROI
-
+  const customerData = result[0];
   res.json(
     new ApiResponse(
       200,
-      { customer /*, loans, transactions, computed */ },
+      {
+        customer: {
+          _id: customerData._id,
+          name: customerData.name,
+          phone: customerData.phone,
+          address: customerData.address,
+          createdBy: customerData.createdBy,
+          notes: customerData.notes,
+          createdAt: customerData.createdAt,
+          updatedAt: customerData.updatedAt,
+        },
+        loans: customerData.loans,
+        transactions: customerData.transactions,
+        computed: {
+          totalPrincipalOutstanding: customerData.totalPrincipalOutstanding,
+          totalInterestDue: customerData.totalInterestDue,
+          totalOverdue: customerData.totalOverdue,
+          roi: customerData.roi,
+        },
+      },
       "Customer details"
     )
   );

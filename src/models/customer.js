@@ -11,4 +11,8 @@ const customerSchema = new Schema(
   { timestamps: true }
 );
 
+customerSchema.index({ name: 1 });
+customerSchema.index({ phone: 1 });
+customerSchema.index({ createdBy: 1 });
+
 export const Customer = mongoose.model("Customer", customerSchema);
