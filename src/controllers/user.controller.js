@@ -54,13 +54,6 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  // req body -> data
-  // username or email
-  //find the user
-  //password check
-  //access and referesh token
-  //send cookie
-  console.log(req.body);
   const { email, phone, password } = req.body;
 
   if (!phone && !email) {
@@ -72,14 +65,11 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({
     $or: [{ phone }, { email }],
   });
-  console.log(user, "user");
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
-
-  console.log(isPasswordValid, "isPasswordValid");
 
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials");
