@@ -9,7 +9,6 @@ const accountSchema = new Schema(
 
     currency: { type: String, default: "INR" },
     isActive: { type: Boolean, default: true },
-    // cachedBalance: { type: Number }, // optional, not used for audit
   },
   { timestamps: true }
 );
@@ -19,5 +18,9 @@ accountSchema.pre("save", function (next) {
   }
   next();
 });
+
+// Add indexes for performance
+accountSchema.index({ name: 1 });
+accountSchema.index({ type: 1 });
 
 export const Account = mongoose.model("Account", accountSchema);
