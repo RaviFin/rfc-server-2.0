@@ -2,8 +2,8 @@ import { Router } from "express";
 import {
   createTransaction,
   deleteTransaction,
-  getTransaction,
-  listTransactions,
+  getAllTransactions,
+  getTransactionById,
   updateTransaction,
 } from "../controllers/transaction.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -11,8 +11,8 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 router.post("/", verifyJWT, createTransaction);
-router.get("/", verifyJWT, listTransactions);
-router.get("/:id", verifyJWT, getTransaction);
+router.get("/", verifyJWT, getAllTransactions);
+router.get("/:id", verifyJWT, getTransactionById);
 router.patch("/:id", verifyJWT, updateTransaction);
 router.delete("/:id", verifyJWT, deleteTransaction);
 

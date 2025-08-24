@@ -7,6 +7,11 @@ const customerSchema = new Schema(
     address: { type: String },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     notes: { type: String },
+
+    // Corporation tracking
+    corporationReceivable: { type: Number, default: 0 }, // How much customer owes
+    totalCorporationGiven: { type: Number, default: 0 }, // Total amount given
+    totalCorporationReceived: { type: Number, default: 0 }, // Total received back
   },
   { timestamps: true }
 );
